@@ -4,20 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧班級打卡系統</title>
-    <!-- 引入 Tailwind CSS -->
+    
+    <!-- 1. 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- [關鍵修正] 引入 Babel 用於解析 JSX 語法 -->
+    <!-- 2. 引入 Babel (用來翻譯 JSX) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <!-- 3. [關鍵修正] 設定 Import Map -->
+    <!--這告訴瀏覽器：當程式碼寫 import ... from 'react' 時，實際上要去哪裡抓檔案 -->
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.300.0"
+      }
+    }
+    </script>
+
     <script>
-        // 1. 設定 Tailwind
+        // 設定 Tailwind 動畫
         tailwind.config = {
             theme: {
                 extend: {
-                    animation: {
-                        'fade-in-down': 'fadeInDown 0.5s ease-out',
-                    },
+                    animation: { 'fade-in-down': 'fadeInDown 0.5s ease-out' },
                     keyframes: {
                         fadeInDown: {
                             '0%': { opacity: '0', transform: 'translateY(-20px)' },
@@ -27,17 +38,16 @@
                 }
             }
         }
-        
-        // 2. React 環境變數補丁 (修復白畫面關鍵)
+        // React 環境變數補丁
         window.process = { env: { NODE_ENV: 'development' } };
     </script>
+
     <style>
         .bg-grid-slate-50 {
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(248 250 252)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
         }
         body { font-family: 'Comic Sans MS', 'Microsoft JhengHei', sans-serif; }
         
-        /* 載入中動畫 */
         #loading {
             position: fixed; inset: 0; background: #f8fafc; display: flex; 
             flex-direction: column; justify-content: center; align-items: center; z-index: 9999;
@@ -50,29 +60,21 @@
     </style>
 </head>
 <body>
-    <!-- 載入指示器 -->
     <div id="loading">
         <div class="spinner"></div>
         <p class="mt-4 text-slate-500 font-bold">系統載入中...</p>
-        <p id="protocol-warning" class="mt-2 text-red-500 text-sm hidden">⚠️ 偵測到您直接開啟檔案，請使用 GitHub Pages 或 Local Server 執行，否則可能會失敗。</p>
     </div>
 
     <!-- 錯誤顯示區 -->
-    <div id="error-box" style="display:none; position:fixed; inset:0; background:white; z-index:10000; padding:2rem; color:red;">
+    <div id="error-box" style="display:none; position:fixed; inset:0; background:white; z-index:10000; padding:2rem; color:red; overflow:auto;">
         <h2 class="text-2xl font-bold mb-2">發生錯誤 (System Error)</h2>
-        <pre id="error-msg" class="bg-red-50 p-4 rounded border border-red-200 overflow-auto"></pre>
-        <p class="mt-4 text-slate-600">請嘗試重新整理頁面，或檢查網路連線。</p>
+        <p class="mb-2 text-slate-700">若看到此畫面，請確認您的網路連線正常（需要連線下載 React 核心檔案）。</p>
+        <pre id="error-msg" class="bg-red-50 p-4 rounded border border-red-200 overflow-auto text-sm font-mono"></pre>
     </div>
 
     <div id="root"></div>
 
-    <!-- 錯誤捕獲腳本 -->
     <script>
-        // 檢查是否為 file:// 協定
-        if (window.location.protocol === 'file:') {
-            document.getElementById('protocol-warning').classList.remove('hidden');
-        }
-
         window.onerror = function(msg, url, line, col, error) {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('error-box').style.display = 'block';
@@ -80,11 +82,12 @@
         };
     </script>
 
-    <!-- [關鍵修正] 改用 text/babel 並加入 data-type="module" -->
+    <!-- 主程式：注意這裡使用了 text/babel 且依賴上方的 importmap -->
     <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useMemo, useRef } from 'https://esm.sh/react@18.2.0?dev';
-        import ReactDOM from 'https://esm.sh/react-dom@18.2.0/client?dev';
-        import { Users, UserCheck, AlertCircle, Settings, RotateCcw, Download, Edit3, Save, Check, AlignVerticalJustifyStart, AlignHorizontalJustifyStart, ChevronLeft, ChevronRight, Upload, FileJson, FileSpreadsheet, Star, Heart, Cloud, Layout, Monitor, BookOpen, Clock, Palette, GripVertical, Minus, Plus, Type } from 'https://esm.sh/lucide-react@0.300.0?dev&external=react';
+        // 這裡現在可以直接使用簡短的名稱，因為我們在上方定義了 importmap
+        import React, { useState, useEffect, useMemo, useRef } from 'react';
+        import ReactDOM from 'react-dom/client';
+        import { Users, UserCheck, AlertCircle, Settings, RotateCcw, Download, Edit3, Save, Check, AlignVerticalJustifyStart, AlignHorizontalJustifyStart, ChevronLeft, ChevronRight, Upload, FileJson, FileSpreadsheet, Star, Heart, Cloud, Layout, Monitor, BookOpen, Clock, Palette, GripVertical, Minus, Plus, Type } from 'lucide-react';
 
         const App = () => {
           // ---------------------------------------------------------------------------
@@ -104,35 +107,29 @@
           // 檢視模式 ('split' | 'checkin' | 'notebook')
           const [viewMode, setViewMode] = useState('split');
 
-          // 書寫方向狀態 ('horizontal' | 'vertical')
           const [writingMode, setWritingMode] = useState(() => {
             return localStorage.getItem('class_note_writing_mode') || 'horizontal';
           });
 
-          // 時鐘樣式設定 (0~4)
           const [clockStyleIndex, setClockStyleIndex] = useState(() => {
             const saved = localStorage.getItem('class_clock_style');
             return saved ? parseInt(saved, 10) : 0;
           });
 
-          // 分屏比例設定 (左側佔比 %)
           const [splitRatio, setSplitRatio] = useState(() => {
             const saved = localStorage.getItem('class_split_ratio');
             return saved ? parseFloat(saved) : 50;
           });
 
-          // 聯絡簿字體大小設定 (px)
           const [notebookFontSize, setNotebookFontSize] = useState(() => {
             const saved = localStorage.getItem('class_notebook_font_size');
             return saved ? parseInt(saved, 10) : 32;
           });
 
-          // 字體類型設定 ('sans' | 'kai' | 'zhuyin')
           const [fontType, setFontType] = useState(() => {
             return localStorage.getItem('class_font_type') || 'sans';
           });
           
-          // 聯絡簿內容
           const [notesData, setNotesData] = useState(() => {
             const saved = localStorage.getItem('class_notes_data');
             if (saved) {
@@ -156,14 +153,13 @@
           const fileInputRef = useRef(null);
           const splitContainerRef = useRef(null);
 
-          // 字體設定對應的 CSS font-family
           const getFontFamily = (type) => {
             switch (type) {
-              case 'kai': // 標楷體
+              case 'kai':
                 return "'標楷體', 'DFKai-SB', 'KaiTi', 'BiauKai', serif";
-              case 'zhuyin': // 嘗試呼叫常見注音字型 (需電腦有安裝)
+              case 'zhuyin':
                 return "'王漢宗中楷體注音', 'HanWangKaiMediumChuIn', '文鼎中楷注音', 'AR PL KaiTiM Big5', '全字庫注音', 'DFKai-SB', 'KaiTi', serif";
-              case 'sans': // 黑體/可愛體 (預設)
+              case 'sans':
               default:
                 return "'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
             }
@@ -171,7 +167,6 @@
 
           const currentFontFamily = getFontFamily(fontType);
 
-          // 時鐘樣式定義
           const CLOCK_STYLES = [
             {
               id: 'simple',
@@ -223,7 +218,6 @@
             localStorage.setItem('class_clock_style', nextIndex);
           };
 
-          // 初始化
           useEffect(() => {
             const savedCustomNames = localStorage.getItem('class_custom_names');
             if (savedCustomNames) {
@@ -234,12 +228,10 @@
                  resetSystem();
               }
             }
-            // 移除 Loading
             const loader = document.getElementById('loading');
             if(loader) loader.style.display = 'none';
           }, []); 
 
-          // 當設定改變時
           const handleSettingChange = (newCount, newEmpty, newNames) => {
             setStudentCount(newCount);
             setEmptyNumbersInput(newEmpty);
@@ -285,7 +277,6 @@
             setStudents(newStudents);
           };
 
-          // 儲存資料
           useEffect(() => {
             localStorage.setItem('class_notes_data', JSON.stringify(notesData));
           }, [notesData]);
@@ -294,17 +285,14 @@
             localStorage.setItem('class_note_writing_mode', writingMode);
           }, [writingMode]);
 
-          // 儲存分屏設定
           useEffect(() => {
             localStorage.setItem('class_split_ratio', splitRatio);
           }, [splitRatio]);
 
-          // 儲存字體大小設定
           useEffect(() => {
             localStorage.setItem('class_notebook_font_size', notebookFontSize);
           }, [notebookFontSize]);
 
-          // 儲存字體類型設定
           useEffect(() => {
             localStorage.setItem('class_font_type', fontType);
           }, [fontType]);
@@ -562,15 +550,13 @@
                    date.getFullYear() === today.getFullYear();
           };
 
-          // 調整字體大小功能
           const adjustFontSize = (delta) => {
             setNotebookFontSize(prev => {
               const newSize = prev + delta;
-              return Math.max(16, Math.min(newSize, 72)); // 限制在 16px - 72px
+              return Math.max(16, Math.min(newSize, 72)); 
             });
           };
 
-          // 處理拖曳調整寬度
           const handleDragStart = (e) => {
             e.preventDefault();
             document.addEventListener('mousemove', handleDragMove);
@@ -591,7 +577,6 @@
             document.removeEventListener('mouseup', handleDragEnd);
           };
 
-          // 定義 notebook 樣式變數
           const notebookFontClasses = viewMode === 'notebook' 
             ? 'text-4xl 2xl:text-6xl leading-relaxed tracking-wider' 
             : 'text-3xl 2xl:text-4xl leading-relaxed tracking-wide'; 
@@ -603,7 +588,6 @@
           return (
             <div className="h-screen bg-slate-100 font-sans text-slate-800 flex flex-col overflow-hidden relative selection:bg-pink-200">
               
-              {/* 背景裝飾 */}
               <div className="absolute top-10 left-10 text-pink-200 opacity-30 pointer-events-none">
                 <Heart className="w-12 h-12" fill="currentColor" />
               </div>
@@ -619,7 +603,6 @@
                 className="hidden"
               />
 
-              {/* 頂部工具列 */}
               <div className="bg-white/80 backdrop-blur-md px-6 py-2 flex justify-between items-center z-20 shrink-0 border-b-4 border-orange-100 h-16 shadow-sm rounded-b-3xl mx-2">
                  <h1 className="text-xl 2xl:text-2xl font-black text-orange-600 flex items-center gap-3 tracking-wider transform hover:scale-105 transition-transform cursor-default">
                     <div className="bg-orange-100 p-2 rounded-full">
@@ -636,7 +619,6 @@
                       遲到標準: {lateThreshold}
                     </div>
                     
-                    {/* 檢視模式切換 */}
                     <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
                        <button 
                          onClick={() => setViewMode('split')} 
@@ -689,7 +671,6 @@
                  </div>
               </div>
 
-              {/* 設定面板 */}
               {showSettings && (
                 <div className="absolute top-20 right-6 z-50 bg-white border-4 border-orange-100 p-6 rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] w-96 animate-fade-in-down max-h-[80vh] overflow-y-auto">
                   <div className="flex justify-between items-center mb-6 border-b-2 border-slate-50 pb-3">
@@ -709,7 +690,6 @@
                         className="block w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-orange-100 focus:border-orange-300 transition-all outline-none font-bold text-slate-700" />
                     </div>
 
-                    {/* 字體選擇 */}
                     <div>
                        <label className="block text-sm font-bold text-slate-600 mb-2">🔤 顯示字體</label>
                        <div className="flex gap-2">
@@ -780,17 +760,14 @@
                 </div>
               )}
 
-              {/* 主畫面 */}
               <div ref={splitContainerRef} className="flex-1 flex flex-col lg:flex-row overflow-hidden p-3 gap-3">
                 
-                {/* 左側：打卡區 */}
                 <div 
                   className={`flex flex-col bg-white rounded-[2.5rem] shadow-xl border-4 border-white overflow-hidden relative transition-all duration-300 ease-in-out ${viewMode === 'notebook' ? 'hidden' : ''}`}
                   style={viewMode === 'split' && typeof window !== 'undefined' && window.innerWidth >= 1024 ? { width: `calc(${splitRatio}% - 0.75rem)`, flex: 'none' } : { flex: 1 }}
                 >
                   <div className="absolute inset-0 bg-grid-slate-50 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] pointer-events-none"></div>
                   
-                  {/* 大時鐘區 - 動態切換風格 */}
                   <div className="p-2 flex flex-col items-center shrink-0 z-10 cursor-pointer group/clock" onClick={toggleClockStyle} title="點擊切換時鐘風格">
                     <div className={`${currentClockStyle.container} font-mono text-5xl xl:text-6xl 2xl:text-7xl px-8 py-3 rounded-2xl border-4 relative overflow-hidden tracking-widest flex items-center justify-center min-w-[320px] transition-all duration-300 group-hover/clock:scale-105 group-hover/clock:shadow-lg`}>
                         <div className={`absolute inset-0 pointer-events-none ${currentClockStyle.overlay}`}></div>
@@ -805,17 +782,13 @@
                     </div>
                   </div>
 
-                  {/* 統計列 (再縮小版 + 橫式排列) */}
                   <div className="px-4 py-1 grid grid-cols-4 gap-2 shrink-0">
                      <StatBadgeMini label="應到" value={stats.total} bg="bg-blue-50" text="text-blue-600" border="border-blue-200" />
                      <StatBadgeMini label="已到" value={stats.present} bg="bg-green-50" text="text-green-600" border="border-green-200" />
-                     {/* 遲到 -> 紅色 */}
                      <StatBadgeMini label="遲到" value={stats.lateArrived} bg="bg-red-50" text="text-red-600" border="border-red-200" />
-                     {/* 未到 -> 黃色 */}
                      <StatBadgeMini label="未到" value={stats.idle + stats.lateAbsent} bg="bg-yellow-50" text="text-yellow-600" border="border-yellow-200" alert={stats.lateAbsent > 0} />
                   </div>
 
-                  {/* 學生按鈕區 */}
                   <div className="flex-1 p-2 overflow-hidden z-10">
                      <div 
                         className={`grid ${getGridColsClass()} gap-2 h-full`}
@@ -836,7 +809,6 @@
                   </div>
                 </div>
 
-                {/* 拖曳調整條 (僅在分屏模式且桌面版顯示) */}
                 {viewMode === 'split' && (
                   <div 
                     className="hidden lg:flex w-4 cursor-col-resize items-center justify-center hover:bg-slate-200 rounded-full transition-colors z-30 -ml-2 -mr-2"
@@ -846,18 +818,15 @@
                   </div>
                 )}
 
-                {/* 右側：黑板聯絡簿區 */}
                 <div 
                   className={`flex flex-col p-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] relative justify-center items-center rounded-[2.5rem] border-4 border-amber-100/50 transition-all duration-300 ease-in-out ${viewMode === 'checkin' ? 'hidden' : ''}`}
                   style={viewMode === 'split' && typeof window !== 'undefined' && window.innerWidth >= 1024 ? { width: `calc(${100 - splitRatio}% - 0.75rem)`, flex: 'none' } : { flex: 1 }}
                 >
                   
-                  {/* 黑板外框容器 */}
                   <div className={`w-full h-full bg-[#2d4035] border-[16px] border-[#a0522d] rounded-[3rem] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.3),inset_0_0_40px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden ring-4 ring-[#8b4513]/30 group`}>
                     
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/10 rounded-full"></div>
                     
-                    {/* 黑板頂部資訊列 */}
                     <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end p-6 pb-2 text-white/90 z-10 shrink-0 border-b-2 border-white/10 border-dashed mx-4">
                       <div className="flex flex-wrap items-baseline gap-4 w-full">
                         <h2 className="text-3xl 2xl:text-4xl font-black tracking-widest font-serif text-[#f0f0f0] drop-shadow-md transform -rotate-1 origin-bottom-left flex items-center gap-2">
@@ -865,7 +834,6 @@
                           今日聯絡簿
                         </h2>
                         
-                        {/* 日期導航 */}
                         <div className="flex items-center gap-3">
                            <button onClick={() => changeDate(-1)} className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all hover:scale-110 active:scale-95" title="前一天">
                              <ChevronLeft className="w-5 h-5" />
@@ -882,7 +850,6 @@
                       </div>
 
                       <div className="flex items-center gap-2 mt-4 xl:mt-0 self-end xl:self-auto ml-auto">
-                         {/* 字體大小調整 */}
                          <div className="flex items-center bg-white/10 rounded-lg mr-2">
                             <button onClick={() => adjustFontSize(-2)} className="p-1.5 hover:bg-white/20 text-white transition-colors rounded-l-lg" title="縮小字體">
                               <Minus className="w-4 h-4" />
@@ -915,7 +882,6 @@
                       </div>
                     </div>
 
-                    {/* 編輯與顯示區 */}
                     <div className="relative flex-1 p-6 z-10 overflow-hidden">
                        {isEditingNote ? (
                          <textarea
@@ -966,7 +932,6 @@
                        )}
                     </div>
                     
-                    {/* 黑板底部粉筆槽區 (變小) */}
                     <div className="h-8 bg-[#3e2714] border-t-8 border-[#2a1a0e] relative flex items-center px-8 shadow-inner z-20 shrink-0">
                        <div className="flex gap-4 absolute left-10 -top-1">
                          <div className="w-12 h-2 bg-white rounded-sm shadow-md transform rotate-2 opacity-90"></div>
@@ -983,11 +948,7 @@
           );
         };
 
-        // -------------------------------------
-        // 輔助元件
-        // -------------------------------------
         const StatBadgeMini = ({ label, value, bg, text, border, alert }) => (
-          // 修改為橫式排列 (flex-row)，並縮小字體
           <div className={`flex flex-row items-center justify-center gap-2 p-1.5 rounded-xl ${bg} ${text} shadow-sm border ${border} ${alert ? 'animate-pulse ring-4 ring-red-100' : ''}`}>
             <span className="text-xs font-bold opacity-80">{label}:</span>
             <span className="text-lg 2xl:text-xl font-black drop-shadow-sm">{value}</span>
@@ -1049,7 +1010,6 @@
           );
         };
 
-        // 渲染應用程式
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
