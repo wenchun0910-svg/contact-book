@@ -6,8 +6,8 @@
     <title>智慧班級打卡系統</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 設定 Tailwind 自定義配置 -->
     <script>
+        // 1. 設定 Tailwind
         tailwind.config = {
             theme: {
                 extend: {
@@ -23,27 +23,67 @@
                 }
             }
         }
+        
+        // 2. React 環境變數補丁 (修復白畫面關鍵)
+        window.process = { env: { NODE_ENV: 'development' } };
     </script>
     <style>
-        /* 補充背景網格樣式 */
         .bg-grid-slate-50 {
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(248 250 252)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
         }
-        /* 設定基本字體 */
-        body {
-            font-family: 'Comic Sans MS', 'Microsoft JhengHei', sans-serif;
+        body { font-family: 'Comic Sans MS', 'Microsoft JhengHei', sans-serif; }
+        
+        /* 載入中動畫 */
+        #loading {
+            position: fixed; inset: 0; background: #f8fafc; display: flex; 
+            flex-direction: column; justify-content: center; align-items: center; z-index: 9999;
         }
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid #cbd5e1; 
+            border-top-color: #f97316; border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <!-- 載入指示器 -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p class="mt-4 text-slate-500 font-bold">系統載入中...</p>
+        <p id="protocol-warning" class="mt-2 text-red-500 text-sm hidden">⚠️ 偵測到您直接開啟檔案，請使用 GitHub Pages 或 Local Server 執行，否則可能會失敗。</p>
+    </div>
+
+    <!-- 錯誤顯示區 -->
+    <div id="error-box" style="display:none; position:fixed; inset:0; background:white; z-index:10000; padding:2rem; color:red;">
+        <h2 class="text-2xl font-bold mb-2">發生錯誤 (System Error)</h2>
+        <pre id="error-msg" class="bg-red-50 p-4 rounded border border-red-200 overflow-auto"></pre>
+        <p class="mt-4 text-slate-600">請嘗試重新整理頁面，或檢查網路連線。</p>
+    </div>
+
     <div id="root"></div>
 
-    <!-- 使用 ES Modules 引入 React 和相關套件 -->
+    <!-- 錯誤捕獲腳本 -->
+    <script>
+        // 檢查是否為 file:// 協定
+        if (window.location.protocol === 'file:') {
+            document.getElementById('protocol-warning').classList.remove('hidden');
+        }
+
+        window.onerror = function(msg, url, line, col, error) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-box').style.display = 'block';
+            document.getElementById('error-msg').textContent = msg + "\n\n" + (error ? error.stack : '');
+        };
+    </script>
+
+    <!-- 主程式 -->
     <script type="module">
-        import React, { useState, useEffect, useMemo, useRef } from 'https://esm.sh/react@18.2.0';
-        import ReactDOM from 'https://esm.sh/react-dom@18.2.0/client';
-        // 引入 Lucide 圖示
-        import { Users, UserCheck, AlertCircle, Settings, RotateCcw, Download, Edit3, Save, Check, AlignVerticalJustifyStart, AlignHorizontalJustifyStart, ChevronLeft, ChevronRight, Upload, FileJson, FileSpreadsheet, Star, Heart, Cloud, Layout, Monitor, BookOpen, Clock, Palette, GripVertical, Minus, Plus, Type } from 'https://esm.sh/lucide-react@0.300.0';
+        // 引入 React (加入 ?dev 以提高相容性)
+        import React, { useState, useEffect, useMemo, useRef } from 'https://esm.sh/react@18.2.0?dev';
+        import ReactDOM from 'https://esm.sh/react-dom@18.2.0/client?dev';
+        
+        // 引入 Lucide (加入 ?dev 和 external=react 以避免重複載入 React 導致錯誤)
+        import { Users, UserCheck, AlertCircle, Settings, RotateCcw, Download, Edit3, Save, Check, AlignVerticalJustifyStart, AlignHorizontalJustifyStart, ChevronLeft, ChevronRight, Upload, FileJson, FileSpreadsheet, Star, Heart, Cloud, Layout, Monitor, BookOpen, Clock, Palette, GripVertical, Minus, Plus, Type } from 'https://esm.sh/lucide-react@0.300.0?dev&external=react';
 
         const App = () => {
           // ---------------------------------------------------------------------------
@@ -193,6 +233,9 @@
                  resetSystem();
               }
             }
+            // 移除 Loading
+            const loader = document.getElementById('loading');
+            if(loader) loader.style.display = 'none';
           }, []); 
 
           // 當設定改變時
