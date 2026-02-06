@@ -6,6 +6,10 @@
     <title>智慧班級打卡系統</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- [關鍵修正] 引入 Babel 用於解析 JSX 語法 -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <script>
         // 1. 設定 Tailwind
         tailwind.config = {
@@ -76,13 +80,10 @@
         };
     </script>
 
-    <!-- 主程式 -->
-    <script type="module">
-        // 引入 React (加入 ?dev 以提高相容性)
+    <!-- [關鍵修正] 改用 text/babel 並加入 data-type="module" -->
+    <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useMemo, useRef } from 'https://esm.sh/react@18.2.0?dev';
         import ReactDOM from 'https://esm.sh/react-dom@18.2.0/client?dev';
-        
-        // 引入 Lucide (加入 ?dev 和 external=react 以避免重複載入 React 導致錯誤)
         import { Users, UserCheck, AlertCircle, Settings, RotateCcw, Download, Edit3, Save, Check, AlignVerticalJustifyStart, AlignHorizontalJustifyStart, ChevronLeft, ChevronRight, Upload, FileJson, FileSpreadsheet, Star, Heart, Cloud, Layout, Monitor, BookOpen, Clock, Palette, GripVertical, Minus, Plus, Type } from 'https://esm.sh/lucide-react@0.300.0?dev&external=react';
 
         const App = () => {
@@ -1001,46 +1002,56 @@
           switch (student.status) {
             case 'empty':
               baseClasses = "relative w-full h-full rounded-2xl flex flex-col items-center justify-center border-4 border-dashed border-slate-200 bg-slate-50/50 opacity-50 cursor-default p-1";
-              content = React.createElement("span", { className: "text-sm font-bold text-slate-300", style: { fontFamily } }, student.name);
+              content = <span className="text-sm font-bold text-slate-300" style={{ fontFamily }}>{student.name}</span>;
               break;
 
             case 'idle':
               statusClasses = "bg-white hover:bg-slate-50 border-slate-200 text-slate-300 hover:text-slate-400";
-              content = React.createElement("span", { className: "text-2xl md:text-3xl 2xl:text-4xl font-black", style: { fontFamily } }, student.name);
+              content = <span className="text-2xl md:text-3xl 2xl:text-4xl font-black" style={{ fontFamily }}>{student.name}</span>;
               break;
             case 'present':
               statusClasses = "bg-emerald-100 hover:bg-emerald-200 border-emerald-300 text-emerald-600";
-              content = React.createElement(React.Fragment, null,
-                React.createElement("span", { className: "text-xl md:text-2xl 2xl:text-3xl font-black leading-none mb-1", style: { fontFamily } }, student.name),
-                React.createElement("span", { className: "text-[10px] md:text-xs 2xl:text-sm font-black mt-0.5 bg-white/60 px-2 py-0.5 rounded-full leading-tight text-emerald-700 shadow-sm" }, student.arrivalTime)
+              content = (
+                <>
+                  <span className="text-xl md:text-2xl 2xl:text-3xl font-black leading-none mb-1" style={{ fontFamily }}>{student.name}</span>
+                  <span className="text-[10px] md:text-xs 2xl:text-sm font-black mt-0.5 bg-white/60 px-2 py-0.5 rounded-full leading-tight text-emerald-700 shadow-sm">{student.arrivalTime}</span>
+                </>
               );
               break;
             case 'late_absent':
               statusClasses = "bg-rose-100 hover:bg-rose-200 border-rose-300 text-rose-500 ring-2 ring-rose-200";
-              content = React.createElement(React.Fragment, null,
-                React.createElement("span", { className: "text-xl md:text-2xl 2xl:text-3xl font-black leading-none mb-1", style: { fontFamily } }, student.name),
-                React.createElement("span", { className: "text-[10px] 2xl:text-xs font-black mt-0.5 animate-bounce leading-tight bg-rose-200 px-2 py-0.5 rounded-full" }, "遲到")
+              content = (
+                <>
+                  <span className="text-xl md:text-2xl 2xl:text-3xl font-black leading-none mb-1" style={{ fontFamily }}>{student.name}</span>
+                  <span className="text-[10px] 2xl:text-xs font-black mt-0.5 animate-bounce leading-tight bg-rose-200 px-2 py-0.5 rounded-full">遲到</span>
+                </>
               );
               break;
             case 'late_arrived':
               statusClasses = "bg-rose-100 hover:bg-rose-200 border-rose-300 text-rose-700";
-              content = React.createElement(React.Fragment, null,
-                React.createElement("span", { className: "text-xl md:text-2xl 2xl:text-3xl font-black leading-none mb-2", style: { fontFamily } }, student.name),
-                React.createElement("div", { className: "flex items-center justify-center gap-1 w-full flex-row" },
-                   React.createElement("span", { className: "text-[9px] md:text-[10px] 2xl:text-xs font-black bg-rose-600 text-white px-1.5 py-0.5 rounded-md leading-none shadow-sm" }, "遲到"),
-                   React.createElement("span", { className: "text-[10px] md:text-xs 2xl:text-sm font-bold opacity-90 leading-none" }, student.arrivalTime)
-                )
+              content = (
+                <>
+                  <span className="text-xl md:text-2xl 2xl:text-3xl font-black leading-none mb-2" style={{ fontFamily }}>{student.name}</span>
+                  <div className="flex items-center justify-center gap-1 w-full flex-row">
+                     <span className="text-[9px] md:text-[10px] 2xl:text-xs font-black bg-rose-600 text-white px-1.5 py-0.5 rounded-md leading-none shadow-sm">遲到</span>
+                     <span className="text-[10px] md:text-xs 2xl:text-sm font-bold opacity-90 leading-none">{student.arrivalTime}</span>
+                  </div>
+                </>
               );
               break;
             default: break;
           }
 
-          return React.createElement("button", { className: `${baseClasses} ${statusClasses}`, onClick: onClick }, content);
+          return (
+            <button className={`${baseClasses} ${statusClasses}`} onClick={onClick}>
+              {content}
+            </button>
+          );
         };
 
         // 渲染應用程式
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(App));
+        root.render(<App />);
     </script>
 </body>
 </html>
